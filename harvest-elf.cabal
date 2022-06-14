@@ -1,0 +1,31 @@
+Name:          harvest-elf
+Version:       0.1
+License:       MIT
+License-file:  LICENSE
+Category:      Data
+Author:        Logan Leland
+Maintainer:    Logan Leland <ethicalmath@gmail.com>
+Stability:     experimental
+Cabal-Version: >= 1.8
+Homepage:      http://github.com/loganleland/harvest-elf
+Build-Type:    Simple
+Synopsis:      Harvest the ELF format
+
+library
+  build-depends:
+    base >= 4.14 && < 5,
+    binary,
+    bytestring
+  ghc-options : -Wall
+  hs-source-dirs:  src
+  exposed-modules:
+    Data.HarvestElf
+
+executable test
+  main-is: Main.hs
+  build-depends:
+    base >= 4.14 && < 5,
+    binary,
+    bytestring,
+    harvest-elf
+  hs-source-dirs: src
