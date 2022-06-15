@@ -5,4 +5,4 @@ import System.Environment
 main = do
   args <- getArgs
   s <- BSL.readFile (head args)
-  print $ elf s
+  putStr $ printElf $ elf s

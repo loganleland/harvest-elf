@@ -16,7 +16,8 @@
 module Data.HarvestElf
   (
     Elf,
-    elf
+    elf,
+    printElf
   ) where
 
 import Data.Word
@@ -39,124 +40,87 @@ data ElfVersion = Current
   deriving (Eq,Show)
 
 data ElfOSABI
-  = ElfSystemV
-  | ElfHPUX
-  | ElfNetBSD
-  | ElfLinux
-  | ElfGNUHurd
-  | ElfSolaris
-  | ElfAIX
-  | ElfIRIX
-  | ElfFreeBSD
-  | ElfTru64
-  | ElfModesto
-  | ElfOpenBSD
-  | ElfOpenVMS
-  | ElfNonStopKernel
-  | ElfAROS
-  | ElfFenixOS
-  | ElfNuxiCloudABI
+  = SystemV
+  | HPUX
+  | NetBSD
+  | Linux
+  | GNUHurd
+  | Solaris
+  | AIX
+  | IRIX
+  | FreeBSD
+  | Tru64
+  | Modesto
+  | OpenBSD
+  | OpenVMS
+  | NonStopKernel
+  | AROS
+  | FenixOS
+  | NuxiCloudABI
   deriving (Eq,Show)
 
 data ElfType
-  = ElfET_NONE
-  | ElfET_REL
-  | ElfET_EXEC
-  | ElfET_DYN
-  | ElfET_CORE
-  | ElfET_LOOS
-  | ElfET_HIOS
-  | ElfET_LOPROC
-  | ElfET_HIPROC
+  = ET_NONE
+  | ET_REL
+  | ET_EXEC
+  | ET_DYN
+  | ET_CORE
+  | ET_LOOS
+  | ET_HIOS
+  | ET_LOPROC
+  | ET_HIPROC
   deriving (Eq,Show)
 
 data ElfMachine
-  = ElfEM_NONE          --0 No machine
-  |  ElfEM_M32          --1 AT&T WE 32100
-  |  ElfEM_SPARC        --2 SPARC
-  |  ElfEM_386          --3 Intel 80386
-  |  ElfEM_68K          --4 Motorola 68000
-  |  ElfEM_88K          --5 Motorola 88000
-  |  ElfReserved        --6 Reserved for future use (was EM_486)
-  |  ElfEM_860          --7 Intel 80860
-  |  ElfEM_MIPS         --8 MIPS I Architecture
-  |  ElfEM_S370         --9 IBM System/370 Processor
-  |  ElfEM_MIPS_RS3_LE  --10  MIPS RS3000 Little-endian
-    --reserved          --11-14 Reserved for future use 
-  |  ElfEM_PARISC       --15  Hewlett-Packard PA-RISC
-    --reserved          --16  Reserved for future use
-  |  ElfEM_VPP500       --17  Fujitsu VPP500
-  |  ElfEM_SPARC32PLUS  --18  Enhanced instruction set SPARC
-  |  ElfEM_960          --19  Intel 80960
-  |  ElfEM_PPC          --20  PowerPC
-  |  ElfEM_PPC64        --21  64-bit PowerPC
-  |  ElfEM_S390         --22  IBM System/390 Processor
-    --reserved          --23-35 Reserved for future use
-  |  ElfEM_V800         --36  NEC V800
-  |  ElfEM_FR20         --37  Fujitsu FR20
-  |  ElfEM_RH32         --38  TRW RH-32
-  |  ElfEM_RCE          --39  Motorola RCE
-  |  ElfEM_ARM          --40  Advanced RISC Machines ARM
-  |  ElfEM_ALPHA        --41  Digital Alpha
-  |  ElfEM_SH           --42  Hitachi SH
-  |  ElfEM_SPARCV9      --43  SPARC Version 9
-  |  ElfEM_TRICORE      --44  Siemens TriCore embedded processor
-  |  ElfEM_ARC          --45  Argonaut RISC Core, Argonaut Technologies Inc.
-  |  ElfEM_H8_300       --46  Hitachi H8/300
-  |  ElfEM_H8_300H      --47  Hitachi H8/300H
-  |  ElfEM_H8S          --48  Hitachi H8S
-  |  ElfEM_H8_500       --49  Hitachi H8/500
-  |  ElfEM_IA_64        --50  Intel IA-64 processor architecture
-  |  ElfEM_MIPS_X       --51  Stanford MIPS-X
-  |  ElfEM_COLDFIRE     --52  Motorola ColdFire
-  |  ElfEM_68HC12       --53  Motorola M68HC12
-  |  ElfEM_MMA          --54  Fujitsu MMA Multimedia Accelerator
-  |  ElfEM_PCP          --55  Siemens PCP
-  |  ElfEM_NCPU         --56  Sony nCPU embedded RISC processor
-  |  ElfEM_NDR1         --57  Denso NDR1 microprocessor
-  |  ElfEM_STARCORE     --58  Motorola Star*Core processor
-  |  ElfEM_ME16         --59  Toyota ME16 processor
-  |  ElfEM_ST100        --60  STMicroelectronics ST100 processor
-  |  ElfEM_TINYJ        --61  Advanced Logic Corp. TinyJ embedded processor family
-  |  ElfEM_X86_64       --62  AMD x86-64 architecture
-  |  ElfEM_PDSP         --63  Sony DSP Processor
-  |  ElfEM_PDP10        --64  Digital Equipment Corp. PDP-10
-  |  ElfEM_PDP11        --65  Digital Equipment Corp. PDP-11
-  |  ElfEM_FX66         --66  Siemens FX66 microcontroller
-  |  ElfEM_ST9PLUS      --67  STMicroelectronics ST9+ 8/16 bit microcontroller
-  |  ElfEM_ST7          --68  STMicroelectronics ST7 8-bit microcontroller
-  |  ElfEM_68HC16       --69  Motorola MC68HC16 Microcontroller
-  |  ElfEM_68HC11       --70  Motorola MC68HC11 Microcontroller
-  |  ElfEM_68HC08       --71  Motorola MC68HC08 Microcontroller
-  |  ElfEM_68HC05       --72  Motorola MC68HC05 Microcontroller
-  |  ElfEM_SVX          --73  Silicon Graphics SVx
-  |  ElfEM_ST19         --74  STMicroelectronics ST19 8-bit microcontroller
-  |  ElfEM_VAX          --75  Digital VAX
-  |  ElfEM_CRIS         --76  Axis Communications 32-bit embedded processor
-  |  ElfEM_JAVELIN      --77  Infineon Technologies 32-bit embedded processor
-  |  ElfEM_FIREPATH     --78  Element 14 64-bit DSP Processor
-  |  ElfEM_ZSP          --79  LSI Logic 16-bit DSP Processor
-  |  ElfEM_MMIX         --80  Donald Knuth's educational 64-bit processor
-  |  ElfEM_HUANY        --81  Harvard University machine-independent object files
-  |  ElfEM_PRISM        --82  SiTera Prism
-  |  ElfEM_AVR          --83  Atmel AVR 8-bit microcontroller
-  |  ElfEM_FR30         --84  Fujitsu FR30
-  |  ElfEM_D10V         --85  Mitsubishi D10V
-  |  ElfEM_D30V         --86  Mitsubishi D30V
-  |  ElfEM_V850         --87  NEC v850
-  |  ElfEM_M32R         --88  Mitsubishi M32R
-  |  ElfEM_MN10300      --89  Matsushita MN10300
-  |  ElfEM_MN10200      --90  Matsushita MN10200
-  |  ElfEM_PJ           --91  picoJava
-  |  ElfEM_OPENRISC     --92  OpenRISC 32-bit embedded processor
-  |  ElfEM_ARC_A5       --93  ARC Cores Tangent-A5
-  |  ElfEM_XTENSA       --94  Tensilica Xtensa Architecture
-  |  ElfEM_VIDEOCORE    --95  Alphamosaic VideoCore processor
-  |  ElfEM_TMM_GPP      --96  Thompson Multimedia General Purpose Processor
-  |  ElfEM_NS32K        --97  National Semiconductor 32000 series
-  |  ElfEM_TPC          --98  Tenor Network TPC processor
-  |  ElfEM_SNP1K        --99  Trebia SNP 1000 processor
-  |  ElfEM_ST200        --100 STMicroelectronics (www.st.com) ST200 microcontrolle
+  = EM_NONE
+  | EM_M32
+  | EM_SPARC
+  | EM_386
+  | EM_68K
+  | EM_88K
+  | EM_486
+  | EM_860
+  | EM_MIPS
+  | EM_MIPS_RS3_LE
+  | EM_MIPS_RS4_BE
+  | EM_PARISC
+  | EM_SPARC32PLUS
+  | EM_PPC
+  | EM_PPC64
+  | EM_SPU
+  | EM_ARM
+  | EM_SH
+  | EM_SPARCV9
+  | EM_H8_300
+  | EM_IA_64
+  | EM_X86_64
+  | EM_S390
+  | EM_CRIS
+  | EM_M32R
+  | EM_MN10300
+  | EM_OPENRISC
+  | EM_ARCOMPACT
+  | EM_XTENSA
+  | EM_BLACKFIN
+  | EM_UNICORE
+  | EM_ALTERA_NIOS2
+  | EM_TI_C6000
+  | EM_HEXAGON
+  | EM_NDS32
+  | EM_AARCH64
+  | EM_TILEPRO
+  | EM_MICROBLAZE
+  | EM_TILEGX
+  | EM_ARCV2
+  | EM_RISCV
+  | EM_BPF
+  | EM_CSKY
+  | EM_LOONGARCH
+  | EM_FRV
+  | EM_ALPHA
+  | EM_CYGNUS_M32R
+  | EM_S390_OLD
+  | EM_CYGNUS_MN10300
   deriving (Eq,Show)
 
 elfMagic' :: Word32 -> Either Word32 Word32
@@ -188,119 +152,89 @@ elfVersion' a
 
 elfOSABI' :: Word8 -> Either Word8 ElfOSABI
 elfOSABI' a
-  | a == 0 = Right ElfSystemV
-  | a == 1 = Right ElfHPUX
-  | a == 2 = Right ElfNetBSD
-  | a == 3 = Right ElfLinux
-  | a == 4 = Right ElfGNUHurd
-  | a == 6 = Right ElfSolaris
-  | a == 7 = Right ElfAIX
-  | a == 8 = Right ElfIRIX
-  | a == 9 = Right ElfFreeBSD
-  | a == 10 = Right ElfTru64
-  | a == 11 = Right ElfModesto
-  | a == 12 = Right ElfOpenBSD
-  | a == 13 = Right ElfOpenVMS
-  | a == 14 = Right ElfNonStopKernel
-  | a == 15 = Right ElfAROS
-  | a == 16 = Right ElfFenixOS
-  | a == 17 = Right ElfNuxiCloudABI
+  | a == 0 = Right SystemV
+  | a == 1 = Right HPUX
+  | a == 2 = Right NetBSD
+  | a == 3 = Right Linux
+  | a == 4 = Right GNUHurd
+  | a == 6 = Right Solaris
+  | a == 7 = Right AIX
+  | a == 8 = Right IRIX
+  | a == 9 = Right FreeBSD
+  | a == 10 = Right Tru64
+  | a == 11 = Right Modesto
+  | a == 12 = Right OpenBSD
+  | a == 13 = Right OpenVMS
+  | a == 14 = Right NonStopKernel
+  | a == 15 = Right AROS
+  | a == 16 = Right FenixOS
+  | a == 17 = Right NuxiCloudABI
   | otherwise = Left a
 
 elfType' :: Word16 -> Either Word16 ElfType
 elfType' a
-  | a == 0 = Right ElfET_NONE
-  | a == 1 = Right ElfET_REL
-  | a == 2 = Right ElfET_EXEC
-  | a == 3 = Right ElfET_DYN
-  | a == 4 = Right ElfET_CORE
+  | a == 0 = Right ET_NONE
+  | a == 1 = Right ET_REL
+  | a == 2 = Right ET_EXEC
+  | a == 3 = Right ET_DYN
+  | a == 4 = Right ET_CORE
   | otherwise = Left a
 
 elfMachine' :: Word16 -> Either Word16 ElfMachine
 elfMachine' a
-  | a == 0 = Right ElfEM_NONE
-  | a == 1 = Right ElfEM_M32
-  | a == 2 = Right ElfEM_SPARC
-  | a == 3 = Right ElfEM_386
-  | a == 4 = Right ElfEM_68K
-  | a == 5 = Right ElfEM_88K
-  | a == 6 = Right ElfReserved
-  | a == 7 = Right ElfEM_860
-  | a == 8 = Right ElfEM_MIPS
-  | a == 9 = Right ElfEM_S370
-  | a == 10 = Right ElfEM_MIPS_RS3_LE
-  | a == 15 = Right ElfEM_PARISC
-  | a == 17 = Right ElfEM_VPP500
-  | a == 18 = Right ElfEM_SPARC32PLUS
-  | a == 19 = Right ElfEM_960
-  | a == 20 = Right ElfEM_PPC
-  | a == 21 = Right ElfEM_PPC64
-  | a == 22 = Right ElfEM_S390
-  | a == 36 = Right ElfEM_V800
-  | a == 37 = Right ElfEM_FR20
-  | a == 38 = Right ElfEM_RH32
-  | a == 39 = Right ElfEM_RCE
-  | a == 40 = Right ElfEM_ARM
-  | a == 41 = Right ElfEM_ALPHA
-  | a == 42 = Right ElfEM_SH
-  | a == 43 = Right ElfEM_SPARCV9
-  | a == 44 = Right ElfEM_TRICORE
-  | a == 45 = Right ElfEM_ARC
-  | a == 46 = Right ElfEM_H8_300
-  | a == 47 = Right ElfEM_H8_300H
-  | a == 48 = Right ElfEM_H8S
-  | a == 49 = Right ElfEM_H8_500
-  | a == 50 = Right ElfEM_IA_64
-  | a == 51 = Right ElfEM_MIPS_X
-  | a == 52 = Right ElfEM_COLDFIRE
-  | a == 53 = Right ElfEM_68HC12
-  | a == 54 = Right ElfEM_MMA
-  | a == 55 = Right ElfEM_PCP
-  | a == 56 = Right ElfEM_NCPU
-  | a == 57 = Right ElfEM_NDR1
-  | a == 58 = Right ElfEM_STARCORE
-  | a == 59 = Right ElfEM_ME16
-  | a == 60 = Right ElfEM_ST100
-  | a == 61 = Right ElfEM_TINYJ
-  | a == 62 = Right ElfEM_X86_64
-  | a == 63 = Right ElfEM_PDSP
-  | a == 64 = Right ElfEM_PDP10
-  | a == 65 = Right ElfEM_PDP11
-  | a == 66 = Right ElfEM_FX66
-  | a == 67 = Right ElfEM_ST9PLUS
-  | a == 68 = Right ElfEM_ST7
-  | a == 69 = Right ElfEM_68HC16
-  | a == 70 = Right ElfEM_68HC11
-  | a == 71 = Right ElfEM_68HC08
-  | a == 72 = Right ElfEM_68HC05
-  | a == 73 = Right ElfEM_SVX
-  | a == 74 = Right ElfEM_ST19
-  | a == 75 = Right ElfEM_VAX
-  | a == 76 = Right ElfEM_CRIS
-  | a == 77 = Right ElfEM_JAVELIN
-  | a == 78 = Right ElfEM_FIREPATH
-  | a == 79 = Right ElfEM_ZSP
-  | a == 80 = Right ElfEM_MMIX
-  | a == 81 = Right ElfEM_HUANY
-  | a == 82 = Right ElfEM_PRISM
-  | a == 83 = Right ElfEM_AVR
-  | a == 84 = Right ElfEM_FR30
-  | a == 85 = Right ElfEM_D10V
-  | a == 86 = Right ElfEM_D30V
-  | a == 87 = Right ElfEM_V850
-  | a == 88 = Right ElfEM_M32R
-  | a == 89 = Right ElfEM_MN10300
-  | a == 90 = Right ElfEM_MN10200
-  | a == 91 = Right ElfEM_PJ
-  | a == 92 = Right ElfEM_OPENRISC
-  | a == 93 = Right ElfEM_ARC_A5
-  | a == 94 = Right ElfEM_XTENSA
-  | a == 95 = Right ElfEM_VIDEOCORE
-  | a == 96 = Right ElfEM_TMM_GPP
-  | a == 97 = Right ElfEM_NS32K
-  | a == 98 = Right ElfEM_TPC
-  | a == 99 = Right ElfEM_SNP1K
-  | a == 100 = Right ElfEM_ST200 
+  | a == 0 = Right EM_NONE
+  | a == 1 = Right EM_M32
+  | a == 2 = Right EM_SPARC
+  | a == 3 = Right EM_386
+  | a == 4 = Right EM_68K
+  | a == 5 = Right EM_88K
+  | a == 6 = Right EM_486 -- Perhaps disused
+  | a == 7 = Right EM_860
+  | a == 8 = Right EM_MIPS --MIPS R3000 (officially, big-endian only)
+  | a == 15 = Right EM_PARISC --HPPA
+  | a == 18 = Right EM_SPARC32PLUS --Sun's "v8plus"
+  | a == 20 = Right EM_PPC --PowerPC
+  | a == 21 = Right EM_PPC64 --PowerPC64
+  | a == 23 = Right EM_SPU --Cell BE SPU
+  | a == 40 = Right EM_ARM --ARM 32 bit
+  | a == 42 = Right EM_SH --SuperH
+  | a == 43 = Right EM_SPARCV9 --SPARC v9 64-bit
+  | a == 46 = Right EM_H8_300 --Renesas H8/300
+  | a == 50 = Right EM_IA_64 --HP/Intel IA-64
+  | a == 62 = Right EM_X86_64 --AMD x86-64
+  | a == 22 = Right EM_S390 --IBM S/390
+  | a == 76 = Right EM_CRIS --Axis Communications 32-bit embedded processor
+  | a == 88 = Right EM_M32R --Renesas M32R
+  | a == 89 = Right EM_MN10300 --Panasonic/MEI MN10300, AM33
+  | a == 92 = Right EM_OPENRISC --OpenRISC 32-bit embedded processor
+  | a == 93 = Right EM_ARCOMPACT --ARCompact processor
+  | a == 94 = Right EM_XTENSA --Tensilica Xtensa Architecture
+  | a == 106 = Right EM_BLACKFIN --ADI Blackfin Processor
+  | a == 110 = Right EM_UNICORE --UniCore-32
+  | a == 113 = Right EM_ALTERA_NIOS2 --Altera Nios II soft-core processor
+  | a == 140 = Right EM_TI_C6000 --TI C6X DSPs
+  | a == 164 = Right EM_HEXAGON --QUALCOMM Hexagon
+  | a == 167 = Right EM_NDS32 --Andes Technology compact code size
+                              --embedded RISC processor family
+  | a == 183 = Right EM_AARCH64 --ARM 64 bit
+  | a == 188 = Right EM_TILEPRO --Tilera TILEPro
+  | a == 189 = Right EM_MICROBLAZE --Xilinx MicroBlaze
+  | a == 191 = Right EM_TILEGX --Tilera TILE-Gx
+  | a == 195 = Right EM_ARCV2 --ARCv2 Cores
+  | a == 243 = Right EM_RISCV --RISC-V
+  | a == 247 = Right EM_BPF --Linux BPF - in-kernel virtual machine
+  | a == 252 = Right EM_CSKY --C-SKY
+  | a == 258 = Right EM_LOONGARCH --LoongArch
+  | a == 21569 = Right EM_FRV --Fujitsu FR-V
+  --This is an interim value that we will use until the committee comes
+  --up with a final number.
+  | a == 36902 = Right EM_ALPHA
+  --Bogus old m32r magic number, used by old tools.
+  | a == 36929 = Right EM_CYGNUS_M32R
+  --This is the old interim value for S/390 architecture
+  | a == 41872 = Right EM_S390_OLD
+  --Also Panasonic/MEI MN10300, AM33
+  | a == 48879 = Right EM_CYGNUS_MN10300
   | otherwise = Left a
  
 data ElfHeader = ElfHeader
@@ -326,9 +260,10 @@ data ElfHeader = ElfHeader
   , elfSectionHeaderNameIndex :: Word16
   } deriving (Eq, Show)
 
-pprint :: ElfHeader -> String
-pprint a = "ELF Header" ++ "\n"
-           ++ "========" ++ "\n"
+printHeader :: ElfHeader -> String
+printHeader a = "========\n"
+           ++ "ELF Header" ++ "\n"
+           ++ "========\n"
            ++ "Magic: " ++ show (elfMagic a) ++ "\n"
            ++ "EI Class: " ++ show (elfClass a) ++ "\n"
            ++ "Endian: " ++ show (elfEIEndian a) ++ "\n"
@@ -411,10 +346,22 @@ data ElfPHeader = ElfPHeader
   }
   deriving Show
 
+printPHeader :: ElfPHeader -> String
+printPHeader a = "ELF Program Header" ++ "\n"
+           ++ "========" ++ "\n"
+           ++ "P Type: " ++ show (pTy a) ++ "\n"
+           ++ "P Flags: " ++ show (pFlag a) ++ "\n"
+           ++ "P Offset: " ++ show (pOff a) ++ "\n"
+           ++ "P Virtual Address: " ++ show (pVOff a) ++ "\n"
+           ++ "P Physical Address: " ++ show (pPAddr a) ++ "\n"
+           ++ "Segment File Image Size: " ++ show (pFilesz a) ++ "\n"
+           ++ "Segment Memory Size: " ++ show (pMemsz a) ++ "\n"
+           ++ "Alignment: " ++ show (pAlign a) ++ "\n"
+ 
 data PTy = PT_NULL | PT_LOAD | PT_DYNAMIC | PT_INTERP | PT_NOTE |
            PT_SHLIB | PT_PHDR | PT_TLS | PT_LOOS | PT_HIOS |
            PT_LOPROC | PT_HIPROC
-  deriving Show
+  deriving (Eq, Show)
 
 getPTy' :: Word32 -> Either Word32 PTy
 getPTy' a
@@ -455,9 +402,6 @@ parseElfPHeader' = do
                     , pMemsz = pMemsz'
                     , pAlign = pAlign'
                     }
---  ElfPHeader <$> G.getWord32le <*> G.getWord32le <*> G.getWord64le
---             <*> G.getWord64le <*> G.getWord64le <*> G.getWord64le
---             <*> G.getWord64le <*> G.getWord64le
 
 ----------------------------------------------
 -- ELF Section
@@ -483,6 +427,27 @@ data ElfSHeader = ElfSHeader
   , dat :: BS.ByteString
   }
   deriving Show
+
+printSHeader' :: ElfSHeader' -> String
+printSHeader' a =
+              "Offset into string table: " ++ show (sName a) ++ "\n"
+           ++ "Section Type: " ++ show (sTy a) ++ "\n"
+           ++ "Section Flags: " ++ show (sFlags a) ++ "\n"
+           ++ "Virtual Address: " ++ show (sAddr a) ++ "\n"
+           ++ "File Image Offset: " ++ show (sOffset a) ++ "\n"
+           ++ "File Image Size: " ++ show (sSize a) ++ "\n"
+           ++ "Index: " ++ show (sLink a) ++ "\n"
+           ++ "Info: " ++ show (sInfo a) ++ "\n"
+           ++ "Alignment: " ++ show (sAddrAlign a) ++ "\n"
+           ++ "Entry Size: " ++ show (sEntSize a) ++ "\n"
+
+printSHeader :: ElfSHeader -> String
+printSHeader a = "ELF Section\n"
+           ++ "========\n"
+           ++ "Name: " ++ show (name a) ++ "\n"
+           ++ printSHeader' (esh a)
+           ++ "Data: " ++ show (dat a) ++ "\n"
+           ++ "\n=======\n"
 
 data ShTy = SHT_NULL | SHT_PROGBITS | SHT_SYMTAB | SHT_STRTAB | SHT_RELA |
             SHT_HASH | SHT_DYNAMIC | SHT_NOTE | SHT_NOBITS | SHT_REL |
@@ -607,3 +572,9 @@ elf a = do
   let pheader = G.runGet (parseElfPHeader (elfProgramHeaderOFF eheader) (fromIntegral $ elfProgramHeaderEntryCount eheader)) a
   let sheader = G.runGet (parseElfSHeader (elfSectionHeaderOFF eheader) (fromIntegral $ elfSectionHeaderEntryCount eheader)) a
   Elf { file = eheader, pHeader=pheader, sHeader=section sheader eheader a}
+
+printElf :: Elf -> String
+printElf a = "Harvested Elf File: " ++ "\n"
+           ++ printHeader (file a) ++ "=========\n"
+           ++ (concat $ map printPHeader (pHeader a))
+           ++ (concat $ map printSHeader (sHeader a))
