@@ -1,2 +1,14 @@
-# Harvest Elf
-Harvest (parse) the elf format.
+# Harvest ELF <img src="./glitched_elf.png" width="200" align=right>
+[![MIT License][li]][ll]
+
+Harvest ELF provides a datatype for the ELF format[^1] that leverages Data.Binary[^2] to provide a fast, accurate typed representation of ELF designed to be resilient against maliciously crafted ELF files.
+
+### TODO
+- Construct a serializer
+- Add utility such as renaming sections and adding sections
+
+[li]: https://img.shields.io/badge/License-MIT-yellow.svg
+[ll]: https://opensource.org/licenses/MIT
+
+[^1]: https://github.com/torvalds/linux/blob/master/include/uapi/linux/elf.h
+[^2]: https://hackage.haskell.org/package/binary-0.10.0.0/docs/Data-Binary.html
