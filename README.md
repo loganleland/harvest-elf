@@ -7,6 +7,10 @@ Harvest ELF provides a datatype for the ELF format[^1] that leverages Data.Binar
 - Construct a serializer
 - Add utility such as renaming sections and adding sections
 
+### Tested on
+- Clang output
+- https://www.virustotal.com/gui/file/15c7fe5a56b80a43544c3227a8589045bf67d0a65c2ebba2506102250f6da963
+
 [li]: https://img.shields.io/badge/License-MIT-yellow.svg
 [ll]: https://opensource.org/licenses/MIT
 
