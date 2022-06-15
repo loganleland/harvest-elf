@@ -1,2 +1,2 @@
-# harvest-elf
-Harvest the Elf format
+# Harvest Elf
+Harvest (parse) the elf format.
