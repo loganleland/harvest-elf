@@ -17,7 +17,9 @@ module Data.HarvestElf
   (
     Elf,
     elf,
-    printElf
+    printElf,
+    ElfHeader,
+    ElfSHeader
   ) where
 
 import Data.Word
@@ -377,6 +379,7 @@ getPTy' a
   | a==1879048191 = Right PT_HIOS
   | a==1879048192 = Right PT_LOPROC  
   | a==2147483647 = Right PT_HIPROC
+  | otherwise = Left a
 
 parseElfPHeader :: Word64 -> Int -> G.Get [ElfPHeader]
 parseElfPHeader a b = do
