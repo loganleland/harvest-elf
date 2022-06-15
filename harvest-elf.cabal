@@ -22,10 +22,10 @@ library
     Data.HarvestElf
 
 executable test
-  main-is: Main.hs
+  main-is: Test.hs
   build-depends:
     base >= 4.14 && < 5,
     binary,
     bytestring,
     harvest-elf
-  hs-source-dirs: src
+  hs-source-dirs: test
