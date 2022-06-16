@@ -370,8 +370,9 @@ data PTy = PT_NULL | PT_LOAD | PT_DYNAMIC | PT_INTERP | PT_NOTE |
            PT_MIPS_REGINFO | PT_MIPS_RTPROC | PT_MIPS_OPTIONS | PT_MIPS_ABIFLAGS
   deriving (Eq, Show)
 
-getPTy' :: Word32 -> Either Word32 PTy
-getPTy' a
+getPTy' :: Word32 -> Either Word8 ElfOSABI -> Either Word16 ElfMachine ->
+           Either Word32 PTy
+getPTy' a b c
   | a==0 = Right PT_NULL
   | a==1 = Right PT_LOAD
   | a==2 = Right PT_DYNAMIC
@@ -380,27 +381,34 @@ getPTy' a
   | a==5 = Right PT_SHLIB
   | a==6 = Right PT_PHDR
   | a==7 = Right PT_TLS
-  --The below 2 have the same value, need to derive
-  --from other info in header
   | a==1685382480 = Right PT_GNU_EH_FRAME
-  | a==1685382480 = Right PT_SUNW_EH_FRAME
-  | a==1684333904 = Right PT_SUNW_UNWIND
+  | a==1685382480 && b==Right Solaris = Right PT_SUNW_EH_FRAME
+  | a==1684333904 && b==Right Solaris = Right PT_SUNW_UNWIND
   | a==1685382482 = Right PT_GNU_RELRO
   | a==1685382483 = Right PT_GNU_PROPERTY
   | a==1705237478 = Right PT_OPENBSD_RANDOMIZE
   | a==1705237479 = Right PT_OPENBSD_WXNEEDED
   | a==1705253862 = Right PT_OPENBSD_BOOTDATA
-  | a==1879048192 = Right PT_ARM_ARCHEXT
+  | a==1879048192 &&
+    c==Right EM_ARM || c==Right EM_AARCH64 = Right PT_ARM_ARCHEXT
   --The below 2 have the same value, need to derive
   --from other info in header
-  | a==1879048193 = Right PT_ARM_EXIDX
-  | a==1879048193 = Right PT_ARM_UNWIND
-  --overlaps PT_ARM_ARCHEXT, derive with more information
-  | a==1879048192 = Right PT_MIPS_REGINFO
-  --overlaps PT_ARM_EXIDX, derive with more information
-  | a==1879048193 = Right PT_MIPS_RTPROC
-  | a==1879048194 = Right PT_MIPS_OPTIONS
-  | a==1879048195 = Right PT_MIPS_ABIFLAGS
+  | a==1879048193 &&
+    c==Right EM_ARM || c==Right EM_AARCH64 = Right PT_ARM_EXIDX
+  | a==1879048193 &&
+    c==Right EM_ARM || c==Right EM_AARCH64 = Right PT_ARM_UNWIND
+  | a==1879048192 &&
+    c==Right EM_MIPS || c==Right EM_MIPS_RS3_LE ||
+    c==Right EM_MIPS_RS4_BE = Right PT_MIPS_REGINFO
+  | a==1879048193 &&
+    c== Right EM_MIPS || c==Right EM_MIPS_RS3_LE || c==Right EM_MIPS_RS4_BE
+    = Right PT_MIPS_RTPROC
+  | a==1879048194 &&
+    c==Right EM_MIPS || c==Right EM_MIPS_RS3_LE || c==Right EM_MIPS_RS4_BE
+    = Right PT_MIPS_OPTIONS
+  | a==1879048195 &&
+    c==Right EM_MIPS || c==Right EM_MIPS_RS3_LE || c==Right EM_MIPS_RS4_BE
+    = Right PT_MIPS_ABIFLAGS
   | a==1685382481 = Right PT_GNU_STACK
   | a==1610612736 = Right PT_LOOS
   | a==1879048191 = Right PT_HIOS
@@ -408,13 +416,15 @@ getPTy' a
   | a==2147483647 = Right PT_HIPROC
   | otherwise = Left a
 
-parseElfPHeader :: Word64 -> Int -> G.Get [ElfPHeader]
-parseElfPHeader a b = do
+parseElfPHeader :: Word64 -> Int -> Either Word8 ElfOSABI ->
+                   Either Word16 ElfMachine -> G.Get [ElfPHeader]
+parseElfPHeader a b c d = do
   G.skip (fromIntegral a)
-  replicateM b parseElfPHeader'
+  replicateM b $ parseElfPHeader' c d
 
-parseElfPHeader' :: G.Get ElfPHeader
-parseElfPHeader' = do
+parseElfPHeader' :: Either Word8 ElfOSABI -> Either Word16 ElfMachine ->
+                    G.Get ElfPHeader
+parseElfPHeader' a b = do
   pTy' <- G.getWord32le
   pFlag' <- G.getWord32le
   pOff' <- G.getWord64le
@@ -423,7 +433,7 @@ parseElfPHeader' = do
   pFilesz' <- G.getWord64le
   pMemsz' <- G.getWord64le
   pAlign' <- G.getWord64le
-  return ElfPHeader { pTy = getPTy' pTy'
+  return ElfPHeader { pTy = getPTy' pTy' a b
                     , pFlag = pFlag'
                     , pOff = pOff'
                     , pVOff = pVOff'
@@ -603,7 +613,7 @@ data Elf = Elf
 elf :: BSL.ByteString -> Elf
 elf a = do
   let eheader = G.runGet parseElfHeader a
-  let pheader = G.runGet (parseElfPHeader (elfProgramHeaderOFF eheader) (fromIntegral $ elfProgramHeaderEntryCount eheader)) a
+  let pheader = G.runGet (parseElfPHeader (elfProgramHeaderOFF eheader) (fromIntegral $ elfProgramHeaderEntryCount eheader) (elfEI_OSABI eheader) (elfMachine eheader)) a
   let sheader = G.runGet (parseElfSHeader (elfSectionHeaderOFF eheader) (fromIntegral $ elfSectionHeaderEntryCount eheader)) a
   Elf { file = eheader, pHeader=pheader, sHeader=section sheader eheader a}
 

@@ -7,7 +7,7 @@ Harvest ELF provides a datatype for the ELF format[^1] that leverages Data.Binar
 - Construct a serializer
 - Add utility such as renaming sections and adding sections
 - Provide a segment view
-- Segment types have overlap in value - need to consider other information to find the most accurate segment type.
+- Segment types PT_ARM_EXIDX and PT_ARM_UNWIND both have value 0x70000001. I need to utilize other information to derive the segment type correctly.
 
 ### Tested on
 - LLVM output[^3]
