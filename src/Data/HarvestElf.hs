@@ -359,7 +359,8 @@ printPHeader a = "ELF Program Header" ++ "\n"
            ++ "Segment File Image Size: " ++ show (pFilesz a) ++ "\n"
            ++ "Segment Memory Size: " ++ show (pMemsz a) ++ "\n"
            ++ "Alignment: " ++ show (pAlign a) ++ "\n"
- 
+
+-- Segment Type 
 data PTy = PT_NULL | PT_LOAD | PT_DYNAMIC | PT_INTERP | PT_NOTE |
            PT_SHLIB | PT_PHDR | PT_TLS | PT_LOOS | PT_HIOS |
            PT_LOPROC | PT_HIPROC
@@ -485,14 +486,18 @@ getShTy a
 data ShFlag = SHF_WRITE | SHF_ALLOC | SHF_EXECINSTR | SHF_MERGE |
               SHF_STRINGS | SHF_INFO_LINK | SHF_LINK_ORDER |
               SHF_OS_NONCONFORMING | SHF_GROUP | SHF_TLS | SHF_MASKOS |
-              SHF_MASKPROC | SHF_ORDERED | SHF_EXCLUDE
+              SHF_MASKPROC | SHF_ORDERED | SHF_EXCLUDE | SHF_ALLOCEXEC |
+              SHF_ALLOCWRITE | SHF_NULL
   deriving (Show, Eq)
 
 getShFlag :: Word64 -> Either Word64 ShFlag
 getShFlag a
+  | a == 0 = Right SHF_NULL
   | a == 1 = Right SHF_WRITE
   | a == 2 = Right SHF_ALLOC
+  | a == 3 = Right SHF_ALLOCWRITE
   | a == 4 = Right SHF_EXECINSTR
+  | a == 6 = Right SHF_ALLOCEXEC
   | a == 16 = Right SHF_MERGE
   | a == 32 = Right SHF_STRINGS
   | a == 64 = Right SHF_INFO_LINK
