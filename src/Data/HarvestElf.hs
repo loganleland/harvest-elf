@@ -363,7 +363,11 @@ printPHeader a = "ELF Program Header" ++ "\n"
 -- Segment Type 
 data PTy = PT_NULL | PT_LOAD | PT_DYNAMIC | PT_INTERP | PT_NOTE |
            PT_SHLIB | PT_PHDR | PT_TLS | PT_LOOS | PT_HIOS |
-           PT_LOPROC | PT_HIPROC
+           PT_LOPROC | PT_HIPROC | PT_GNU_STACK | PT_GNU_EH_FRAME |
+           PT_SUNW_EH_FRAME | PT_SUNW_UNWIND | PT_GNU_RELRO |
+           PT_GNU_PROPERTY | PT_OPENBSD_RANDOMIZE | PT_OPENBSD_WXNEEDED |
+           PT_OPENBSD_BOOTDATA | PT_ARM_ARCHEXT | PT_ARM_EXIDX | PT_ARM_UNWIND |
+           PT_MIPS_REGINFO | PT_MIPS_RTPROC | PT_MIPS_OPTIONS | PT_MIPS_ABIFLAGS
   deriving (Eq, Show)
 
 getPTy' :: Word32 -> Either Word32 PTy
@@ -376,6 +380,28 @@ getPTy' a
   | a==5 = Right PT_SHLIB
   | a==6 = Right PT_PHDR
   | a==7 = Right PT_TLS
+  --The below 2 have the same value, need to derive
+  --from other info in header
+  | a==1685382480 = Right PT_GNU_EH_FRAME
+  | a==1685382480 = Right PT_SUNW_EH_FRAME
+  | a==1684333904 = Right PT_SUNW_UNWIND
+  | a==1685382482 = Right PT_GNU_RELRO
+  | a==1685382483 = Right PT_GNU_PROPERTY
+  | a==1705237478 = Right PT_OPENBSD_RANDOMIZE
+  | a==1705237479 = Right PT_OPENBSD_WXNEEDED
+  | a==1705253862 = Right PT_OPENBSD_BOOTDATA
+  | a==1879048192 = Right PT_ARM_ARCHEXT
+  --The below 2 have the same value, need to derive
+  --from other info in header
+  | a==1879048193 = Right PT_ARM_EXIDX
+  | a==1879048193 = Right PT_ARM_UNWIND
+  --overlaps PT_ARM_ARCHEXT, derive with more information
+  | a==1879048192 = Right PT_MIPS_REGINFO
+  --overlaps PT_ARM_EXIDX, derive with more information
+  | a==1879048193 = Right PT_MIPS_RTPROC
+  | a==1879048194 = Right PT_MIPS_OPTIONS
+  | a==1879048195 = Right PT_MIPS_ABIFLAGS
+  | a==1685382481 = Right PT_GNU_STACK
   | a==1610612736 = Right PT_LOOS
   | a==1879048191 = Right PT_HIOS
   | a==1879048192 = Right PT_LOPROC  
