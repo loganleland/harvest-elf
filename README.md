@@ -6,6 +6,7 @@ Harvest ELF provides a datatype for the ELF format[^1] that leverages Data.Binar
 ### TODO
 - Construct a serializer
 - Add utility such as renaming sections and adding sections
+- Provide a segment view
 
 ### Tested on
 - LLVM output[^3]
