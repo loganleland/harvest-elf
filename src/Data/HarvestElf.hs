@@ -41,88 +41,24 @@ data ElfEndianness = LE | BE
 data ElfVersion = Current
   deriving (Eq,Show)
 
-data ElfOSABI
-  = SystemV
-  | HPUX
-  | NetBSD
-  | Linux
-  | GNUHurd
-  | Solaris
-  | AIX
-  | IRIX
-  | FreeBSD
-  | Tru64
-  | Modesto
-  | OpenBSD
-  | OpenVMS
-  | NonStopKernel
-  | AROS
-  | FenixOS
-  | NuxiCloudABI
+data ElfOSABI = SystemV | HPUX | NetBSD | Linux | GNUHurd | Solaris | AIX | IRIX |
+                FreeBSD | Tru64 | Modesto | OpenBSD | OpenVMS | NonStopKernel | AROS |
+                FenixOS | NuxiCloudABI
   deriving (Eq,Show)
 
-data ElfType
-  = ET_NONE
-  | ET_REL
-  | ET_EXEC
-  | ET_DYN
-  | ET_CORE
-  | ET_LOOS
-  | ET_HIOS
-  | ET_LOPROC
-  | ET_HIPROC
+data ElfType = ET_NONE | ET_REL | ET_EXEC | ET_DYN | ET_CORE | ET_LOOS |
+               ET_HIOS | ET_LOPROC | ET_HIPROC
   deriving (Eq,Show)
 
-data ElfMachine
-  = EM_NONE
-  | EM_M32
-  | EM_SPARC
-  | EM_386
-  | EM_68K
-  | EM_88K
-  | EM_486
-  | EM_860
-  | EM_MIPS
-  | EM_MIPS_RS3_LE
-  | EM_MIPS_RS4_BE
-  | EM_PARISC
-  | EM_SPARC32PLUS
-  | EM_PPC
-  | EM_PPC64
-  | EM_SPU
-  | EM_ARM
-  | EM_SH
-  | EM_SPARCV9
-  | EM_H8_300
-  | EM_IA_64
-  | EM_X86_64
-  | EM_S390
-  | EM_CRIS
-  | EM_M32R
-  | EM_MN10300
-  | EM_OPENRISC
-  | EM_ARCOMPACT
-  | EM_XTENSA
-  | EM_BLACKFIN
-  | EM_UNICORE
-  | EM_ALTERA_NIOS2
-  | EM_TI_C6000
-  | EM_HEXAGON
-  | EM_NDS32
-  | EM_AARCH64
-  | EM_TILEPRO
-  | EM_MICROBLAZE
-  | EM_TILEGX
-  | EM_ARCV2
-  | EM_RISCV
-  | EM_BPF
-  | EM_CSKY
-  | EM_LOONGARCH
-  | EM_FRV
-  | EM_ALPHA
-  | EM_CYGNUS_M32R
-  | EM_S390_OLD
-  | EM_CYGNUS_MN10300
+data ElfMachine = EM_NONE | EM_M32 | EM_SPARC | EM_386 | EM_68K | EM_88K |
+                  EM_486 | EM_860 | EM_MIPS | EM_MIPS_RS3_LE | EM_MIPS_RS4_BE |
+                  EM_PARISC | EM_SPARC32PLUS | EM_PPC | EM_PPC64 | EM_SPU | EM_ARM |
+                  EM_SH | EM_SPARCV9 | EM_H8_300 | EM_IA_64 | EM_X86_64 | EM_S390 |
+                  EM_CRIS | EM_M32R | EM_MN10300 | EM_OPENRISC | EM_ARCOMPACT |
+                  EM_XTENSA | EM_BLACKFIN | EM_UNICORE | EM_ALTERA_NIOS2 | EM_TI_C6000 |
+                  EM_HEXAGON | EM_NDS32 | EM_AARCH64 | EM_TILEPRO | EM_MICROBLAZE |
+                  EM_TILEGX | EM_ARCV2 | EM_RISCV | EM_BPF | EM_CSKY | EM_LOONGARCH |
+                  EM_FRV | EM_ALPHA | EM_CYGNUS_M32R | EM_S390_OLD | EM_CYGNUS_MN10300
   deriving (Eq,Show)
 
 elfMagic' :: Word32 -> Either Word32 Word32
