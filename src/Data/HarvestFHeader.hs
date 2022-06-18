@@ -189,8 +189,8 @@ data ElfFHeader = ElfFHeader
   , elfSectionHeaderNameIndex :: Word16
   } deriving (Eq, Show)
 
-printHeader :: ElfFHeader -> String
-printHeader a = "========\n"
+pprint :: ElfFHeader -> String
+pprint a = "========\n"
            ++ "ELF Header" ++ "\n"
            ++ "========\n"
            ++ "Magic: " ++ show (elfMagic a) ++ "\n"

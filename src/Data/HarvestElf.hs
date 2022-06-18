@@ -8,42 +8,42 @@
 -- Stability   :  experimental
 -- Portability :  portable
 --
--- Harvest the ELF format.
--- https://refspecs.linuxfoundation.org/elf/gabi4+/
+-- Harvest (parse) the ELF format.
 --
 -----------------------------------------------------------------------------
 
 module Data.HarvestElf
   (
     Elf,
-    elf,
+    harvest,
     printElf,
+    FH.ElfFHeader,
     PH.ElfPHeader,
     SH.ElfSHeader
   ) where
 
 import qualified Data.Binary.Get as G
 import qualified Data.ByteString.Lazy as BSL
-import Data.HarvestFHeader
+import qualified Data.HarvestFHeader as FH
 import qualified Data.HarvestPHeader as PH
 import qualified Data.HarvestSHeader as SH
 
 data Elf = Elf
-  { file :: ElfFHeader
+  { fHeader :: FH.ElfFHeader
   , pHeader :: [PH.ElfPHeader]
   , sHeader :: [SH.ElfSHeader]
   }
   deriving Show
 
-elf :: BSL.ByteString -> Elf
-elf a = do
-  let eheader = G.runGet parseElfFHeader a
-  let pheader = G.runGet (PH.parseElfPHeader (elfProgramHeaderOFF eheader) (fromIntegral $ elfProgramHeaderEntryCount eheader) (elfEI_OSABI eheader) (elfMachine eheader)) a
-  let sheader = G.runGet (SH.parseElfSHeader (elfSectionHeaderOFF eheader) (fromIntegral $ elfSectionHeaderEntryCount eheader)) a
-  Elf { file = eheader, pHeader=pheader, sHeader=SH.section sheader eheader a}
+harvest :: BSL.ByteString -> Elf
+harvest a = do
+  let eheader = G.runGet FH.parseElfFHeader a
+  let pheader = G.runGet (PH.parseElfPHeader (FH.elfProgramHeaderOFF eheader) (fromIntegral $ FH.elfProgramHeaderEntryCount eheader) (FH.elfEI_OSABI eheader) (FH.elfMachine eheader)) a
+  let sheader = G.runGet (SH.parseElfSHeader (FH.elfSectionHeaderOFF eheader) (fromIntegral $ FH.elfSectionHeaderEntryCount eheader)) a
+  Elf { fHeader = eheader, pHeader=pheader, sHeader=SH.section sheader eheader a}
 
 printElf :: Elf -> String
 printElf a = "Harvested Elf File: " ++ "\n"
-           ++ printHeader (file a) ++ "=========\n"
+           ++ FH.pprint (fHeader a) ++ "=========\n"
            ++ (concat $ map PH.pprint (pHeader a))
            ++ (concat $ map SH.pprint (sHeader a))
