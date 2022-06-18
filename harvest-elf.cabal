@@ -20,6 +20,9 @@ library
   hs-source-dirs:  src
   exposed-modules:
     Data.HarvestElf
+    Data.HarvestFHeader
+    Data.HarvestPHeader
+    Data.HarvestSHeader
 
 executable test
   main-is: Test.hs
