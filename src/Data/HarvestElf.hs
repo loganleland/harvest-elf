@@ -16,7 +16,7 @@ module Data.HarvestElf
   (
     Elf,
     harvest,
-    printElf,
+    pprint,
     FH.ElfFHeader,
     PH.ElfPHeader,
     SH.ElfSHeader
@@ -42,8 +42,8 @@ harvest a = do
   let sheader = G.runGet (SH.parseElfSHeader (FH.elfSectionHeaderOFF eheader) (fromIntegral $ FH.elfSectionHeaderEntryCount eheader)) a
   Elf { fHeader = eheader, pHeader=pheader, sHeader=SH.section sheader eheader a}
 
-printElf :: Elf -> String
-printElf a = "Harvested Elf File: " ++ "\n"
+pprint :: Elf -> String
+pprint a = "Harvested Elf File: " ++ "\n"
            ++ FH.pprint (fHeader a) ++ "=========\n"
            ++ (concat $ map PH.pprint (pHeader a))
            ++ (concat $ map SH.pprint (sHeader a))

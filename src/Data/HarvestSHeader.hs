@@ -16,6 +16,7 @@ module Data.HarvestSHeader
   where
 
 import Data.Word
+import Data.Bits (Bits, testBit)
 import Control.Monad (replicateM)
 import qualified Data.Binary.Get as G
 import qualified Data.ByteString.Lazy as BSL
@@ -29,7 +30,7 @@ import Data.HarvestFHeader
 data ElfSHeader' = ElfSHeader'
   { sName :: Word32
   , sTy :: Either Word32 ShTy
-  , sFlags :: Either Word64 ShFlag
+  , sFlags :: [ShFlag]
   , sAddr :: Word64
   , sOffset :: Word64
   , sSize :: Word64
@@ -143,33 +144,18 @@ getShTy a
   | a==4294967295 = Right SHT_HIUSER
   | otherwise = Left a
 
-data ShFlag = SHF_WRITE | SHF_ALLOC | SHF_EXECINSTR | SHF_MERGE |
-              SHF_STRINGS | SHF_INFO_LINK | SHF_LINK_ORDER |
-              SHF_OS_NONCONFORMING | SHF_GROUP | SHF_TLS | SHF_MASKOS |
-              SHF_MASKPROC | SHF_ORDERED | SHF_EXCLUDE | SHF_ALLOCEXEC |
-              SHF_ALLOCWRITE | SHF_NULL
+data ShFlag = SHF_WRITE | SHF_ALLOC | SHF_EXECINSTR | SHF_MERGE | SHF_EXT
   deriving (Show, Eq)
 
-getShFlag :: Word64 -> Either Word64 ShFlag
-getShFlag a
-  | a == 0 = Right SHF_NULL
-  | a == 1 = Right SHF_WRITE
-  | a == 2 = Right SHF_ALLOC
-  | a == 3 = Right SHF_ALLOCWRITE
-  | a == 4 = Right SHF_EXECINSTR
-  | a == 6 = Right SHF_ALLOCEXEC
-  | a == 16 = Right SHF_MERGE
-  | a == 32 = Right SHF_STRINGS
-  | a == 64 = Right SHF_INFO_LINK
-  | a == 128 = Right SHF_LINK_ORDER
-  | a == 256 = Right SHF_OS_NONCONFORMING
-  | a == 512 = Right SHF_GROUP
-  | a == 1024 = Right SHF_TLS
-  | a == 267386880 = Right SHF_MASKOS
-  | a == 4026531840 = Right SHF_MASKPROC
-  | a == 67108864 = Right SHF_ORDERED
-  | a == 134217728 = Right SHF_EXCLUDE
-  | otherwise = Left a
+getShFlag :: Word64 -> [ShFlag]
+getShFlag = getShFlag' 8
+
+getShFlag' :: Bits a => Int -> a -> [ShFlag]
+getShFlag' 0 _ = []
+getShFlag' 1 a = if testBit a 1 then SHF_WRITE : getShFlag' 0 a else getShFlag' 0 a
+getShFlag' 2 a = if testBit a 2 then SHF_ALLOC : getShFlag' 1 a else getShFlag' 1 a
+getShFlag' 3 a = if testBit a 3 then SHF_EXECINSTR : getShFlag' 2 a else getShFlag' 2 a
+getShFlag' _ b = getShFlag' 3 b
 
 parseElfSHeader :: Word64 -> Int -> G.Get [ElfSHeader']
 parseElfSHeader a b = do
