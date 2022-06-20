@@ -7,7 +7,6 @@ Harvest ELF provides a datatype for the ELF format[^1] that leverages Data.Binar
 - Construct a serializer
 - Add utility such as renaming sections and adding sections
 - Provide a segment view
-- Add support for 32 bit ELF
 - Segment types PT_ARM_EXIDX and PT_ARM_UNWIND both have value 0x70000001. I need to utilize other information to derive the segment type correctly.
 
 ### Tested on

@@ -18,7 +18,7 @@ module Data.HarvestPHeader
 import Data.Word
 import Control.Monad (replicateM)
 import qualified Data.Binary.Get as G
-import Data.HarvestFHeader
+import qualified Data.HarvestFHeader as FH
 
 data ElfPHeader = ElfPHeader
   { pTy :: Either Word32 PTy
@@ -54,7 +54,7 @@ data PTy = PT_NULL | PT_LOAD | PT_DYNAMIC | PT_INTERP | PT_NOTE |
            PT_MIPS_REGINFO | PT_MIPS_RTPROC | PT_MIPS_OPTIONS | PT_MIPS_ABIFLAGS
   deriving (Eq, Show)
 
-getPTy' :: Word32 -> Either Word8 ElfOSABI -> Either Word16 ElfMachine ->
+getPTy' :: Word32 -> Either Word8 FH.ElfOSABI -> Either Word16 FH.ElfMachine ->
            Either Word32 PTy
 getPTy' a b c
   | a==0 = Right PT_NULL
@@ -66,32 +66,32 @@ getPTy' a b c
   | a==6 = Right PT_PHDR
   | a==7 = Right PT_TLS
   | a==1685382480 = Right PT_GNU_EH_FRAME
-  | a==1685382480 && b==Right Solaris = Right PT_SUNW_EH_FRAME
-  | a==1684333904 && b==Right Solaris = Right PT_SUNW_UNWIND
+  | a==1685382480 && b==Right FH.Solaris = Right PT_SUNW_EH_FRAME
+  | a==1684333904 && b==Right FH.Solaris = Right PT_SUNW_UNWIND
   | a==1685382482 = Right PT_GNU_RELRO
   | a==1685382483 = Right PT_GNU_PROPERTY
   | a==1705237478 = Right PT_OPENBSD_RANDOMIZE
   | a==1705237479 = Right PT_OPENBSD_WXNEEDED
   | a==1705253862 = Right PT_OPENBSD_BOOTDATA
   | a==1879048192 &&
-    c==Right EM_ARM || c==Right EM_AARCH64 = Right PT_ARM_ARCHEXT
+    c==Right FH.EM_ARM || c==Right FH.EM_AARCH64 = Right PT_ARM_ARCHEXT
   --The below 2 have the same value, need to derive
   --from other info in header
   | a==1879048193 &&
-    c==Right EM_ARM || c==Right EM_AARCH64 = Right PT_ARM_EXIDX
+    c==Right FH.EM_ARM || c==Right FH.EM_AARCH64 = Right PT_ARM_EXIDX
   | a==1879048193 &&
-    c==Right EM_ARM || c==Right EM_AARCH64 = Right PT_ARM_UNWIND
+    c==Right FH.EM_ARM || c==Right FH.EM_AARCH64 = Right PT_ARM_UNWIND
   | a==1879048192 &&
-    c==Right EM_MIPS || c==Right EM_MIPS_RS3_LE ||
-    c==Right EM_MIPS_RS4_BE = Right PT_MIPS_REGINFO
+    c==Right FH.EM_MIPS || c==Right FH.EM_MIPS_RS3_LE ||
+    c==Right FH.EM_MIPS_RS4_BE = Right PT_MIPS_REGINFO
   | a==1879048193 &&
-    c== Right EM_MIPS || c==Right EM_MIPS_RS3_LE || c==Right EM_MIPS_RS4_BE
+    c== Right FH.EM_MIPS || c==Right FH.EM_MIPS_RS3_LE || c==Right FH.EM_MIPS_RS4_BE
     = Right PT_MIPS_RTPROC
   | a==1879048194 &&
-    c==Right EM_MIPS || c==Right EM_MIPS_RS3_LE || c==Right EM_MIPS_RS4_BE
+    c==Right FH.EM_MIPS || c==Right FH.EM_MIPS_RS3_LE || c==Right FH.EM_MIPS_RS4_BE
     = Right PT_MIPS_OPTIONS
   | a==1879048195 &&
-    c==Right EM_MIPS || c==Right EM_MIPS_RS3_LE || c==Right EM_MIPS_RS4_BE
+    c==Right FH.EM_MIPS || c==Right FH.EM_MIPS_RS3_LE || c==Right FH.EM_MIPS_RS4_BE
     = Right PT_MIPS_ABIFLAGS
   | a==1685382481 = Right PT_GNU_STACK
   | a==1610612736 = Right PT_LOOS
@@ -100,29 +100,49 @@ getPTy' a b c
   | a==2147483647 = Right PT_HIPROC
   | otherwise = Left a
 
-parseElfPHeader :: Word64 -> Int -> Either Word8 ElfOSABI ->
-                   Either Word16 ElfMachine -> G.Get [ElfPHeader]
-parseElfPHeader a b c d = do
-  G.skip (fromIntegral a)
-  replicateM b $ parseElfPHeader' c d
+parseElfPHeader :: FH.ElfFHeader -> G.Get [ElfPHeader]
+parseElfPHeader a = do
+  G.skip $ fromIntegral $ FH.elfProgramHeaderOFF a
+  replicateM (fromIntegral $ FH.elfProgramHeaderEntryCount a) $ parseElfPHeader' a
 
-parseElfPHeader' :: Either Word8 ElfOSABI -> Either Word16 ElfMachine ->
+parseElfPHeader' :: FH.ElfFHeader ->
                     G.Get ElfPHeader
-parseElfPHeader' a b = do
+parseElfPHeader' a = do
   pTy' <- G.getWord32le
-  pFlag' <- G.getWord32le
-  pOff' <- G.getWord64le
-  pVOff' <- G.getWord64le
-  pPAddr' <- G.getWord64le
-  pFilesz' <- G.getWord64le
-  pMemsz' <- G.getWord64le
-  pAlign' <- G.getWord64le
-  return ElfPHeader { pTy = getPTy' pTy' a b
-                    , pFlag = pFlag'
-                    , pOff = pOff'
-                    , pVOff = pVOff'
-                    , pPAddr = pPAddr'
-                    , pFilesz = pFilesz'
-                    , pMemsz = pMemsz'
-                    , pAlign = pAlign'
-                    }
+  e <- case (FH.elfClass a) of
+    Right FH.ElfClass64 -> do
+      pFlag' <- G.getWord32le
+      pOff' <- G.getWord64le
+      pVOff' <- G.getWord64le
+      pPAddr' <- G.getWord64le
+      pFilesz' <- G.getWord64le
+      pMemsz' <- G.getWord64le
+      pAlign' <- G.getWord64le
+      return ElfPHeader { pTy = getPTy' pTy' (FH.elfEI_OSABI a) (FH.elfMachine a)
+                        , pFlag = pFlag'
+                        , pOff = pOff'
+                        , pVOff = pVOff'
+                        , pPAddr = pPAddr'
+                        , pFilesz = pFilesz'
+                        , pMemsz = pMemsz'
+                        , pAlign = pAlign'
+                        }
+    Right FH.ElfClass32 -> do
+      pOff' <- G.getWord32le
+      pVOff' <- G.getWord32le
+      pPAddr' <- G.getWord32le
+      pFilesz' <- G.getWord32le
+      pMemsz' <- G.getWord32le
+      pFlag' <- G.getWord32le
+      pAlign' <- G.getWord32le
+      return ElfPHeader { pTy = getPTy' pTy' (FH.elfEI_OSABI a) (FH.elfMachine a)
+                        , pFlag = pFlag'
+                        , pOff = fromIntegral pOff'
+                        , pVOff = fromIntegral pVOff'
+                        , pPAddr = fromIntegral pPAddr'
+                        , pFilesz = fromIntegral pFilesz'
+                        , pMemsz = fromIntegral pMemsz'
+                        , pAlign = fromIntegral pAlign'
+                        }
+    Left b -> fail $ "Cannot derive 32-bit or 64-bit: " ++ (show b)
+  return e

@@ -226,35 +226,72 @@ parseElfFHeader = do
   ty <- G.getWord16le
   machine <- G.getWord16le
   version <- G.getWord32le
-  entry <- G.getWord64le
-  pheader_off <- G.getWord64le
-  sheader_off <- G.getWord64le
-  flags <- G.getWord32le
-  header_size <- G.getWord16le
-  pheader_entry_size <- G.getWord16le
-  pheader_entry_count <- G.getWord16le
-  sheader_entry_size <- G.getWord16le
-  sheader_entry_count <- G.getWord16le
-  sheader_name_index <- G.getWord16le
+  e <- case elfClass' ei_class of
+    Right ElfClass64 -> do
+      entry <- G.getWord64le
+      pheader_off <- G.getWord64le
+      sheader_off <- G.getWord64le
+      flags <- G.getWord32le
+      header_size <- G.getWord16le
+      pheader_entry_size <- G.getWord16le
+      pheader_entry_count <- G.getWord16le
+      sheader_entry_size <- G.getWord16le
+      sheader_entry_count <- G.getWord16le
+      sheader_name_index <- G.getWord16le
 
-  return ElfFHeader { elfMagic = elfMagic' ei_mag
-                    , elfClass = elfClass' ei_class
-                    , elfEIEndian = elfEndian' ei_data
-                    , elfEI_Version = elfEIVersion' ei_version
-                    , elfEI_OSABI = elfOSABI' ei_osabi
-                    , elfEI_ABIVersion = ei_abiVersion
-                    , elfPad = ei_pad
-                    , elfTy = elfType' ty
-                    , elfMachine = elfMachine' machine
-                    , elfVersion = elfVersion' version
-                    , elfEntry = entry
-                    , elfProgramHeaderOFF = pheader_off
-                    , elfSectionHeaderOFF = sheader_off
-                    , elfFlags = flags
-                    , elfHeaderSize = header_size
-                    , elfProgramHeaderEntrySize = pheader_entry_size
-                    , elfProgramHeaderEntryCount = pheader_entry_count
-                    , elfSectionHeaderEntrySize = sheader_entry_size
-                    , elfSectionHeaderEntryCount = sheader_entry_count
-                    , elfSectionHeaderNameIndex = sheader_name_index
+      return ElfFHeader { elfMagic = elfMagic' ei_mag
+                        , elfClass = elfClass' ei_class
+                        , elfEIEndian = elfEndian' ei_data
+                        , elfEI_Version = elfEIVersion' ei_version
+                        , elfEI_OSABI = elfOSABI' ei_osabi
+                        , elfEI_ABIVersion = ei_abiVersion
+                        , elfPad = ei_pad
+                        , elfTy = elfType' ty
+                        , elfMachine = elfMachine' machine
+                        , elfVersion = elfVersion' version
+                        , elfEntry = entry
+                        , elfProgramHeaderOFF = pheader_off
+                        , elfSectionHeaderOFF = sheader_off
+                        , elfFlags = flags
+                        , elfHeaderSize = header_size
+                        , elfProgramHeaderEntrySize = pheader_entry_size
+                        , elfProgramHeaderEntryCount = pheader_entry_count
+                        , elfSectionHeaderEntrySize = sheader_entry_size
+                        , elfSectionHeaderEntryCount = sheader_entry_count
+                        , elfSectionHeaderNameIndex = sheader_name_index
                     }
+    Right ElfClass32 -> do
+      entry <- G.getWord32le
+      pheader_off <- G.getWord32le
+      sheader_off <- G.getWord32le
+      flags <- G.getWord32le
+      header_size <- G.getWord16le
+      pheader_entry_size <- G.getWord16le
+      pheader_entry_count <- G.getWord16le
+      sheader_entry_size <- G.getWord16le
+      sheader_entry_count <- G.getWord16le
+      sheader_name_index <- G.getWord16le
+
+      return ElfFHeader { elfMagic = elfMagic' ei_mag
+                        , elfClass = elfClass' ei_class
+                        , elfEIEndian = elfEndian' ei_data
+                        , elfEI_Version = elfEIVersion' ei_version
+                        , elfEI_OSABI = elfOSABI' ei_osabi
+                        , elfEI_ABIVersion = ei_abiVersion
+                        , elfPad = ei_pad
+                        , elfTy = elfType' ty
+                        , elfMachine = elfMachine' machine
+                        , elfVersion = elfVersion' version
+                        , elfEntry = fromIntegral entry
+                        , elfProgramHeaderOFF = fromIntegral pheader_off
+                        , elfSectionHeaderOFF = fromIntegral sheader_off
+                        , elfFlags = flags
+                        , elfHeaderSize = header_size
+                        , elfProgramHeaderEntrySize = pheader_entry_size
+                        , elfProgramHeaderEntryCount = pheader_entry_count
+                        , elfSectionHeaderEntrySize = sheader_entry_size
+                        , elfSectionHeaderEntryCount = sheader_entry_count
+                        , elfSectionHeaderNameIndex = sheader_name_index
+                    }
+    Left a -> fail $ "Cannot derive 32-bit or 64-bit: " ++ (show a)
+  return e

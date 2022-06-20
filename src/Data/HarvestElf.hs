@@ -38,8 +38,8 @@ data Elf = Elf
 harvest :: BSL.ByteString -> Elf
 harvest a = do
   let eheader = G.runGet FH.parseElfFHeader a
-  let pheader = G.runGet (PH.parseElfPHeader (FH.elfProgramHeaderOFF eheader) (fromIntegral $ FH.elfProgramHeaderEntryCount eheader) (FH.elfEI_OSABI eheader) (FH.elfMachine eheader)) a
-  let sheader = G.runGet (SH.parseElfSHeader (FH.elfSectionHeaderOFF eheader) (fromIntegral $ FH.elfSectionHeaderEntryCount eheader)) a
+  let pheader = G.runGet (PH.parseElfPHeader eheader) a
+  let sheader = G.runGet (SH.parseElfSHeader eheader) a
   Elf { fHeader = eheader, pHeader=pheader, sHeader=SH.section sheader eheader a}
 
 pprint :: Elf -> String

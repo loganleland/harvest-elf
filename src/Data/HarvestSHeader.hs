@@ -21,7 +21,7 @@ import Control.Monad (replicateM)
 import qualified Data.Binary.Get as G
 import qualified Data.ByteString.Lazy as BSL
 import qualified Data.ByteString as BS
-import Data.HarvestFHeader
+import qualified Data.HarvestFHeader as FH
 
 ----------------------------------------------
 -- ELF Section
@@ -147,8 +147,12 @@ getShTy a
 data ShFlag = SHF_WRITE | SHF_ALLOC | SHF_EXECINSTR | SHF_MERGE | SHF_EXT
   deriving (Show, Eq)
 
-getShFlag :: Word64 -> [ShFlag]
-getShFlag = getShFlag' 8
+getShFlag64 :: Word64 -> [ShFlag]
+getShFlag64 = getShFlag' 8
+
+getShFlag32 :: Word32 -> [ShFlag]
+getShFlag32 = getShFlag' 4
+
 
 getShFlag' :: Bits a => Int -> a -> [ShFlag]
 getShFlag' 0 _ = []
@@ -157,39 +161,63 @@ getShFlag' 2 a = if testBit a 2 then SHF_ALLOC : getShFlag' 1 a else getShFlag' 
 getShFlag' 3 a = if testBit a 3 then SHF_EXECINSTR : getShFlag' 2 a else getShFlag' 2 a
 getShFlag' _ b = getShFlag' 3 b
 
-parseElfSHeader :: Word64 -> Int -> G.Get [ElfSHeader']
-parseElfSHeader a b = do
-  G.skip (fromIntegral a)
-  replicateM b parseElfSHeader'
+parseElfSHeader :: FH.ElfFHeader -> G.Get [ElfSHeader']
+parseElfSHeader a = do
+  G.skip $ fromIntegral $ FH.elfSectionHeaderOFF a
+  replicateM (fromIntegral $ FH.elfSectionHeaderEntryCount a) $ parseElfSHeader' a
 
-parseElfSHeader' :: G.Get ElfSHeader'
-parseElfSHeader' = do
+parseElfSHeader' :: FH.ElfFHeader -> G.Get ElfSHeader'
+parseElfSHeader' a = do
   sName' <- G.getWord32le
   sTy' <- G.getWord32le
-  sFlags' <- G.getWord64le
-  sAddr' <- G.getWord64le
-  sOffset' <- G.getWord64le
-  sSize' <- G.getWord64le
-  sLink' <- G.getWord32le
-  sInfo' <- G.getWord32le
-  sAddrAlign' <- G.getWord64le
-  sEntSize' <- G.getWord64le
-  return ElfSHeader' { sName = sName'
-                     , sTy = getShTy sTy'
-                     , sFlags = getShFlag sFlags'
-                     , sAddr = sAddr'
-                     , sOffset = sOffset'
-                     , sSize = sSize'
-                     , sLink = sLink'
-                     , sInfo = sInfo'
-                     , sAddrAlign = sAddrAlign'
-                     , sEntSize = sEntSize'
-                     }
+  e <- case FH.elfClass a of
+    Right FH.ElfClass64 -> do
+      sFlags' <- G.getWord64le
+      sAddr' <- G.getWord64le
+      sOffset' <- G.getWord64le
+      sSize' <- G.getWord64le
+      sLink' <- G.getWord32le
+      sInfo' <- G.getWord32le
+      sAddrAlign' <- G.getWord64le
+      sEntSize' <- G.getWord64le
+      return ElfSHeader' { sName = sName'
+                         , sTy = getShTy sTy'
+                         , sFlags = getShFlag64 sFlags'
+                         , sAddr = sAddr'
+                         , sOffset = sOffset'
+                         , sSize = sSize'
+                         , sLink = sLink'
+                         , sInfo = sInfo'
+                         , sAddrAlign = sAddrAlign'
+                         , sEntSize = sEntSize'
+                         }
+    Right FH.ElfClass32 -> do
+      sFlags' <- G.getWord32le
+      sAddr' <- G.getWord32le
+      sOffset' <- G.getWord32le
+      sSize' <- G.getWord32le
+      sLink' <- G.getWord32le
+      sInfo' <- G.getWord32le
+      sAddrAlign' <- G.getWord32le
+      sEntSize' <- G.getWord32le
+      return ElfSHeader' { sName = sName'
+                         , sTy = getShTy sTy'
+                         , sFlags = getShFlag32 sFlags'
+                         , sAddr = fromIntegral sAddr'
+                         , sOffset = fromIntegral sOffset'
+                         , sSize = fromIntegral sSize'
+                         , sLink = sLink'
+                         , sInfo = fromIntegral sInfo'
+                         , sAddrAlign = fromIntegral sAddrAlign'
+                         , sEntSize = fromIntegral sEntSize'
+                         }
+    Left b -> fail $ "Cannot derive 32-bit or 64-bit: " ++ (show b)
+  return e
 
-stringTbl :: ElfFHeader -> [ElfSHeader'] -> G.Get BS.ByteString
+stringTbl :: FH.ElfFHeader -> [ElfSHeader'] -> G.Get BS.ByteString
 stringTbl a b = sectionData' (b!!nameOff)
   where
-    nameOff = fromIntegral $ elfSectionHeaderNameIndex a
+    nameOff = fromIntegral $ FH.elfSectionHeaderNameIndex a
 
 sectionData' :: ElfSHeader' -> G.Get BS.ByteString
 sectionData' a = do
@@ -206,7 +234,7 @@ sectionData a b = map (flip G.runGet b) $ map sectionData' a
 getSectionName :: BS.ByteString -> Int -> BS.ByteString
 getSectionName a b = BS.takeWhile (not . (==0)) $ BS.drop b a
 
-section :: [ElfSHeader'] -> ElfFHeader -> BSL.ByteString -> [ElfSHeader]
+section :: [ElfSHeader'] -> FH.ElfFHeader -> BSL.ByteString -> [ElfSHeader]
 section a b c = map comb $ zip stbL $ zip a sd
   where
     sd = sectionData a c
