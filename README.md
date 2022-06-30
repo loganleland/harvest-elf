@@ -5,6 +5,7 @@ Harvest ELF provides a datatype for the ELF format[^1] that leverages Data.Binar
 
 ### TODO
 - Provide a segment view
+- Add features as needed once disassembly work has started.
 
 ### Tested on
 - GCC output[^5]
